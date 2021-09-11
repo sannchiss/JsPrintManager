@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <div style="text-align:center">
+        <hr/>
+        <label class="checkbox">
+        <input type="checkbox" id="useDefaultPrinter" /> <strong>Print to Default printer</strong>
+    </label>
+        <p>or...</p>
+        <div id="installedPrinters">
+            <label for="installedPrinterName">Select an installed Printer:</label>
+            <select name="installedPrinterName" id="installedPrinterName"></select>
+        </div>
+        <br /><br />
+        <button type="button" onclick="print();">Print Now...</button>
+    </div>
+
+    <script src="http://jsprintmanager.azurewebsites.net/scripts/JSPrintManager.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gildas-lormeau/zip.js/dist/zip-full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bluebird/3.3.5/bluebird.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+
+
+</body>
+
+</html>
+
+
+
+<script type="text/javascript">
+    //WebSocket settings
+    JSPM.JSPrintManager.auto_reconnect = true;
+    JSPM.JSPrintManager.start();
+    JSPM.JSPrintManager.WS.onStatusChanged = function() {
+        if (jspmWSStatus()) {
+            //get client installed printers
+            JSPM.JSPrintManager.getPrinters().then(function(myPrinters) {
+                var options = '';
+                for (var i = 0; i < myPrinters.length; i++) {
+                    options += '<option>' + myPrinters[i] + '</option>';
+                }
+                $('#installedPrinterName').html(options);
+            });
+        }
+    };
+
+    //Check JSPM WebSocket status
+    function jspmWSStatus() {
+        if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Open)
+            return true;
+        else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Closed) {
+            alert('JSPrintManager (JSPM) is not installed or not running! Download JSPM Client App from https://neodynamic.com/downloads/jspm');
+            return false;
+        } else if (JSPM.JSPrintManager.websocket_status == JSPM.WSStatus.Blocked) {
+            alert('JSPM has blocked this website!');
+            return false;
+        }
+    }
+
+    //Do printing...
+    function print() {
+        if (jspmWSStatus()) {
+            //Create a ClientPrintJob
+            var cpj = new JSPM.ClientPrintJob();
+            //Set Printer type (Refer to the help, there many of them!)
+            if ($('#useDefaultPrinter').prop('checked')) {
+                cpj.clientPrinter = new JSPM.DefaultPrinter();
+            } else {
+                cpj.clientPrinter = new JSPM.InstalledPrinter($('#installedPrinterName').val());
+            }
+            //Set content to print...
+            //Create Zebra EPL commands for sample label
+
+
+            let code64Bite = "Ckk4LEEsMDM0Ck8KUTU5OSwxCnE3OTkKUzQKRDEyClpUCkpGCgpOCkZLIkVYUEVFUEwiCkZTIkVYUEVFUEwiClYwMCw5OSxOLCJudW1lcm9fZW52aW8iClYwMSw5OSxOLCJjb2RpZ29fYmFycmFzX3RudCIKVjAyLDk5LE4sIm5vbWJyZV9vcmlfdG50IgpWMDMsOTksTiwibm9tYnJlX29yaV90bnRfMSIKVjA0LDk5LE4sIm5vbWJyZV9vcmlfdG50XzIiClYwNSw5OSxOLCJwb2JsYWNpb25fb3JpIgpWMDYsOTksTiwibm9tYnJlX2RlcyIKVjA3LDk5LE4sImRpcmVjY2lvbl9kZXMiClYwOCw5OSxOLCJwb2JsYWNpb25fZGVzIgpWMDksOTksTiwidGlwb19zZXJ2aWNpb19kZXNjcmlwY2lvbiIKVjEwLDk5LE4sImNwX2RlcyIKVjExLDk5LE4sInpvbmFfcmVwYXJ0byIKVjEyLDk5LE4sIm51bWVyb19idWx0byIKVjEzLDk5LE4sInRvdGFsX2J1bHRvcyIKVjE0LDk5LE4sImRlbGVnYWNpb25fZGVzX2Rlc2NyaXBjaW9uIgpWMTUsOTksTiwiZm9ybWFfcGFnbyIKVjE2LDk5LE4sImZlY2hhX3ZlbnRhIgpBMTksMTMsMCw0LDIsMixOLCJGZWRFeCIKQTQ2LDY1LDAsMSwxLDEsTiwiRXhwcmVzcyIKQTI0LDg4LDAsMSwxLDEsTiwiUkVNSVRFTlRFOiIKQTQxNyw4OCwwLDEsMSwxLE4sIkRFU1RJTkFUQVJJTzoiCkEzMywyNTcsMCwxLDEsMSxOLCJCVUxUTyBOOiIKQTEzOCwyNTcsMCwxLDEsMSxOLCJCVUxUT1M6IgpBMjUwLDI1NywwLDEsMSwxLE4sIk9SREVOIFRSQU5TUE9SVEUgTjoiCkEyNTAsMjc2LDAsNCwxLDIsTiwiIlYwMApCMTA1LDMzNCwwLDEsMywwLDIzNCxOLCIiVjAxCkExODcsNTc1LDAsNCwxLDEsTiwiIlYwMQpBMjUsMTIyLDAsNCwxLDEsTiwiIlYwMgpBMjUsMTExLDAsNCwxLDEsTiwiIlYwMwpBMjUsMTQwLDAsNCwxLDEsTiwiIlYwNApBMjQsMTYwLDAsMywxLDIsTiwiIlYwNQpBNDI0LDExNSwwLDMsMSwxLE4sIiJWMDYKQTQyNCwxNDcsMCwyLDEsMSxOLCIiVjA3CkE0MjQsMjAwLDAsMywxLDIsTiwiIlYwOApBMjQsMTk5LDAsMiwxLDEsTiwiIlYwOQpBMzcwLDEzLDAsNSwxLDEsTiwiIlYxNApBNDk0LDI3OCwwLDMsMiwyLFIsIlpvbmE6ICJWMTEKQTMyLDI4MCwwLDMsMSwyLE4sIiJWMTIKQTEzOCwyODAsMCwzLDEsMixOLCIiVjEzCkE0MjQsMTc3LDAsMiwxLDEsTiwiIlYxMApBMjQsMjIzLDAsMywxLDEsTiwiIlYxNQpBMjcwLDIyMywwLDIsMSwxLE4sIiJWMTYKWDE2LDgwLDMsMzkzLDI0NApYNDA3LDgwLDMsNzg0LDI0NApYMTYsMjQ3LDMsNzg1LDMyNgpMRTE2LDI3MCw3NjcsMwpMRTEyMCwyNDcsMyw3NwpMRTIzMCwyNDcsMyw3OApGRQoKRlIiRVhQRUVQTCIKPwo5MTAwMTA5OTUKMDAxNzgwMDExMDUwOTEwMDEwOTk1MDAxMDAxClRFU1RGTkxOQ0hJTEUKCgpRVUlOVEEgREUgVElMIENPQ08KUFJVRUJBIERFU1RJTkFUQVJJTwpQUlVFQkEgRElSRUNDSU9OIERFU1RJTk8KQUxUTyBQQUxFTkEgIENCU1QKRVhQUkVTTwo1ODgwMDAwCjEwNTAKMDAxCjAwMQpQVUVSVE8gTU9OVFQKUEFHQURPCjI1LTA2LTIwMjEKUDEK";
+            etiquetaDecode = window.atob(code64Bite);
+
+
+            console.warn(etiquetaDecode);
+
+            var cmds = etiquetaDecode;
+
+
+            cpj.printerCommands = etiquetaDecode;
+            //Send print job to printer!
+            cpj.sendToClient();
+        }
+    }
+</script>
